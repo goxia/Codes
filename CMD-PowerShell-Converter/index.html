@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CMD到PowerShell命令转换器 - 轻松转换和学习命令">
+    <meta name="theme-color" content="#2196F3">
+    <title>CMD ⇄ PowerShell 转换器</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="styles/main.css">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="container">
+                <h1 class="logo">
+                    <i class="fas fa-terminal"></i>
+                    CMD ⇄ PowerShell 转换器
+                </h1>
+                <div class="header-controls">
+                    <button id="theme-toggle" class="theme-toggle" title="切换主题">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="container">
+                <div class="converter">
+                    <!-- Left Panel - CMD -->
+                    <div class="panel cmd-panel">
+                        <div class="panel-header">
+                            <h2>
+                                <i class="fas fa-terminal"></i>
+                                CMD
+                            </h2>
+                            <div class="panel-tools">
+                                <button class="clear-btn" data-target="cmd" title="清空">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <button class="copy-btn" data-target="cmd" title="复制">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="input-container">
+                            <textarea 
+                                id="cmd-input" 
+                                class="command-input" 
+                                placeholder="输入 CMD 命令...&#10;例如: dir /s *.txt"
+                                spellcheck="false"
+                            ></textarea>
+                        </div>
+                        <div class="suggestions" id="cmd-suggestions"></div>
+                    </div>
+
+                    <!-- Swap Button -->
+                    <div class="swap-container">
+                        <button id="swap-btn" class="swap-btn" title="交换输入输出">
+                            <i class="fas fa-exchange-alt"></i>
+                        </button>
+                    </div>
+
+                    <!-- Right Panel - PowerShell -->
+                    <div class="panel ps-panel">
+                        <div class="panel-header">
+                            <h2>
+                                <i class="fab fa-microsoft"></i>
+                                PowerShell
+                            </h2>
+                            <div class="panel-tools">
+                                <button class="clear-btn" data-target="ps" title="清空">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <button class="copy-btn" data-target="ps" title="复制">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="input-container">
+                            <textarea 
+                                id="ps-input" 
+                                class="command-input" 
+                                placeholder="PowerShell 命令将在这里显示...&#10;或者输入 PowerShell 命令转换为 CMD"
+                                spellcheck="false"
+                            ></textarea>
+                        </div>
+                        <div class="suggestions" id="ps-suggestions"></div>
+                    </div>
+                </div>
+
+                <!-- Conversion Info Panel -->
+                <div class="conversion-info" id="conversion-info">
+                    <div class="info-header">
+                        <i class="fas fa-info-circle"></i>
+                        转换说明
+                    </div>
+                    <div class="info-content" id="info-content">
+                        输入命令后将显示转换说明和建议
+                    </div>
+                </div>
+
+                <!-- Command Examples -->
+                <div class="examples-section">
+                    <h3>常用命令对照</h3>
+                    <div class="examples-grid" id="examples-grid">
+                        <!-- Examples will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- History Section -->
+                <div class="history-section">
+                    <div class="section-header">
+                        <h3>转换历史</h3>
+                        <button id="clear-history" class="clear-history-btn">
+                            <i class="fas fa-trash"></i>
+                            清空历史
+                        </button>
+                    </div>
+                    <div class="history-list" id="history-list">
+                        <!-- History items will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <p>&copy; 2025 CMD to PowerShell Converter.</p>
+            </div>
+        </footer>
+
+        <!-- Toast Notifications -->
+        <div id="toast-container" class="toast-container"></div>
+
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/commands.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/converter.js"></script>
+    <script src="js/enhanced-query.js"></script>
+    <script src="js/enhanced-converter.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
