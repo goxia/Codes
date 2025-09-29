@@ -83,7 +83,7 @@ class IPQueryApp {
         // 页面加载时自动查询当前IP
         window.addEventListener('load', () => {
             setTimeout(() => {
-                this.handleSearch();
+                this.handleAutoQuery();
             }, 500);
         });
     }
@@ -134,6 +134,97 @@ class IPQueryApp {
             this.showError(error.message);
             this.showToast('查询失败: ' + error.message, 'error');
         }
+    }
+
+    // 自动查询：先获取客户端真实IP，再查询详细信息
+    async handleAutoQuery() {
+        try {
+            this.showLoading();
+            this.hideError();
+            this.hideResults();
+            
+            // 先获取客户端真实IP
+            const realIP = await this.getRealClientIP();
+            
+            if (realIP) {
+                // 使用获取到的真实IP查询详细信息
+                const result = await this.queryIP(realIP);
+                
+                if (result && result.status === 'success') {
+                    this.displayResults(result);
+                    this.showToast('自动查询成功', 'success');
+                } else {
+                    throw new Error(result.message || '查询失败');
+                }
+            } else {
+                // 如果无法获取真实IP，回退到原来的方法
+                const result = await this.queryIP();
+                
+                if (result && result.status === 'success') {
+                    this.displayResults(result);
+                    this.showToast('查询成功（显示服务器IP）', 'warning');
+                } else {
+                    throw new Error(result.message || '查询失败');
+                }
+            }
+        } catch (error) {
+            this.showError(error.message);
+            this.showToast('自动查询失败: ' + error.message, 'error');
+        }
+    }
+
+    // 获取客户端真实IP地址
+    async getRealClientIP() {
+        try {
+            // 使用多个IP获取服务，增加成功率
+            const ipServices = [
+                'https://api.ipify.org?format=json',
+                'https://ipapi.co/json/',
+                'https://ip-api.com/json/',
+                'https://httpbin.org/ip'
+            ];
+
+            for (const service of ipServices) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时
+
+                    const response = await fetch(service, {
+                        signal: controller.signal,
+                        headers: { 'Accept': 'application/json' }
+                    });
+
+                    clearTimeout(timeoutId);
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        // 不同服务返回的字段名不同，尝试获取IP
+                        const ip = data.ip || data.query || data.origin?.split(' ')[0];
+                        
+                        if (ip && this.isValidIP(ip)) {
+                            console.log(`从 ${service} 获取到IP: ${ip}`);
+                            return ip;
+                        }
+                    }
+                } catch (error) {
+                    console.log(`从 ${service} 获取IP失败:`, error.message);
+                    continue; // 尝试下一个服务
+                }
+            }
+
+            console.log('所有IP获取服务都失败，将使用服务器IP');
+            return null;
+        } catch (error) {
+            console.log('获取真实IP出错:', error.message);
+            return null;
+        }
+    }
+
+    // 验证IP地址格式
+    isValidIP(ip) {
+        const ipPattern = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+        return ipPattern.test(ip);
     }
 
     async queryIP(ip = '') {
