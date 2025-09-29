@@ -144,9 +144,10 @@ class IPQueryApp {
             'isp', 'org', 'as', 'asname', 'mobile', 'proxy', 'hosting'
         ].join(',');
 
+        // 使用HTTPS协议以兼容Azure Static Web Apps的HTTPS环境
         const url = ip 
-            ? `http://ip-api.com/json/${ip}?fields=${defaultFields}`
-            : `http://ip-api.com/json?fields=${defaultFields}`;
+            ? `https://ip-api.com/json/${ip}?fields=${defaultFields}`
+            : `https://ip-api.com/json?fields=${defaultFields}`;
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
