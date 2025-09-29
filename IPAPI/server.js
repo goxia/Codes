@@ -6,8 +6,16 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 启用CORS
-app.use(cors());
+// 启用CORS - 生产环境配置
+const corsOptions = {
+    origin: process.env.NODE_ENV === 'production' 
+        ? ['https://ipapi.azurewebsites.net', 'https://*.azurewebsites.net']
+        : true,
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Accept'],
+    credentials: false
+};
+app.use(cors(corsOptions));
 
 // 解析JSON请求体
 app.use(express.json());
