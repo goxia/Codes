@@ -137,47 +137,99 @@ class IPQueryApp {
     }
 
     async queryIP(ip = '') {
-        // 使用Azure Functions API代理来解决HTTPS/HTTP混合内容问题
-        const apiUrl = ip 
-            ? `/api/ip-query?ip=${encodeURIComponent(ip)}`
-            : `/api/ip-query`;
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
-
-        try {
-            const response = await fetch(apiUrl, {
-                signal: controller.signal,
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json'
+        // 使用支持HTTPS的免费IP查询服务解决混合内容问题
+        const apis = [
+            {
+                name: 'ipapi.co',
+                getUrl: (ip) => ip 
+                    ? `https://ipapi.co/${ip}/json/`
+                    : `https://ipapi.co/json/`,
+                transformData: (data) => {
+                    if (data.error) {
+                        throw new Error(data.reason || 'API查询失败');
+                    }
+                    return {
+                        status: 'success',
+                        query: data.ip,
+                        country: data.country_name || '-',
+                        countryCode: data.country_code || '-',
+                        city: data.city || '-',
+                        zip: data.postal || '-',
+                        lat: data.latitude || 0,
+                        lon: data.longitude || 0,
+                        timezone: data.timezone || '-',
+                        isp: data.org || '-',
+                        org: data.org || '-',
+                        as: data.asn ? `AS${data.asn}` : '-',
+                        asname: data.org || '-',
+                        mobile: false,
+                        proxy: false,
+                        hosting: false
+                    };
                 }
-            });
+            },
+            {
+                name: 'ipwhois.app',
+                getUrl: (ip) => ip 
+                    ? `https://ipwhois.app/json/${ip}`
+                    : `https://ipwhois.app/json/`,
+                transformData: (data) => {
+                    if (!data.success) {
+                        throw new Error(data.message || 'API查询失败');
+                    }
+                    return {
+                        status: 'success',
+                        query: data.ip,
+                        country: data.country || '-',
+                        countryCode: data.country_code || '-',
+                        city: data.city || '-',
+                        zip: data.zip || '-',
+                        lat: data.latitude || 0,
+                        lon: data.longitude || 0,
+                        timezone: data.timezone_name || '-',
+                        isp: data.isp || '-',
+                        org: data.org || '-',
+                        as: data.asn ? `AS${data.asn}` : '-',
+                        asname: data.org || '-',
+                        mobile: false,
+                        proxy: false,
+                        hosting: false
+                    };
+                }
+            }
+        ];
 
-            clearTimeout(timeoutId);
+        for (const api of apis) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-            if (!response.ok) {
-                throw new Error(`API错误: ${response.status}`);
-            }
+            try {
+                const url = api.getUrl(ip);
+                const response = await fetch(url, {
+                    signal: controller.signal,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
 
-            const data = await response.json();
-            
-            // 检查API返回的状态
-            if (data.status === 'fail') {
-                throw new Error(`查询失败: ${data.message || '未知错误'}`);
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status}`);
+                }
+
+                const rawData = await response.json();
+                const data = api.transformData(rawData);
+                
+                return data;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                console.log(`${api.name} API失败:`, error.message);
+                // 继续尝试下一个API
             }
-            
-            return data;
-        } catch (error) {
-            clearTimeout(timeoutId);
-            if (error.name === 'AbortError') {
-                throw new Error('请求超时，请检查网络连接');
-            }
-            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-                throw new Error('无法连接到API服务，请稍后重试');
-            }
-            throw new Error('查询失败: ' + error.message);
         }
+
+        throw new Error('所有IP查询服务都不可用，请稍后重试');
     }
 
     displayResults(data) {
