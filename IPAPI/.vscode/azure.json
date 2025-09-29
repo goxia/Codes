@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "defaultProvider": "appService",
+  "providers": [
+    {
+      "name": "appService",
+      "type": "appService",
+      "configuration": {
+        "appType": "app",
+        "runtime": {
+          "name": "node",
+          "version": "18-lts"
+        }
+      }
+    }
+  ]
+}

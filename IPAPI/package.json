@@ -1,0 +1,21 @@
+{
+  "name": "ip-query-app",
+  "version": "1.0.0",
+  "description": "IP查询工具 - 基于ip-api.com接口的现代化Web应用",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["ip", "geolocation", "azure", "web-app"],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "axios": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
