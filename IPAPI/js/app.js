@@ -61,8 +61,7 @@ class IPQueryApp {
 
         // 查询我的IP
         this.myIpBtn.addEventListener('click', () => {
-            this.ipInput.value = '';
-            this.handleSearch();
+            this.handleMyIPQuery();
         });
 
         // 清除按钮
@@ -161,6 +160,39 @@ class IPQueryApp {
         } catch (error) {
             console.error('自动查询失败:', error);
             this.showError('自动查询失败: ' + error.message);
+        }
+    }
+
+    // 手动查询我的IP
+    async handleMyIPQuery() {
+        try {
+            this.showLoading();
+            this.clearResults();
+            this.hideError();
+            
+            // 获取客户端真实IP
+            const realIP = await this.getRealClientIP();
+            
+            if (realIP) {
+                // 将获取到的IP显示在输入框中
+                this.ipInput.value = realIP;
+                
+                // 查询IP详细信息
+                const result = await this.queryIP(realIP);
+                
+                if (result && result.status === 'success') {
+                    this.displayResults(result);
+                    this.showToast(`查询成功 - 您的IP: ${realIP}`, 'success');
+                } else {
+                    throw new Error(result.message || '查询失败');
+                }
+            } else {
+                throw new Error('无法获取您的IP地址');
+            }
+        } catch (error) {
+            console.error('查询我的IP失败:', error);
+            this.showError('查询失败: ' + error.message);
+            this.showToast('获取IP地址失败', 'error');
         }
     }
 
