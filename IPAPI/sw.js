@@ -1,9 +1,9 @@
-const CACHE_NAME = 'ip-query-v1.0.0';
+const CACHE_NAME = 'ip-query-v1.0.1';
 const urlsToCache = [
     './',
     './index.html',
-    './styles.css',
-    './app.js',
+    './css/style.css',
+    './js/app.js',
     './manifest.json',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];

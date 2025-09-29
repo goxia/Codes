@@ -154,10 +154,13 @@ class IPQueryApp {
 
         try {
             const response = await fetch(url, {
+                method: 'GET',
                 signal: controller.signal,
                 headers: {
                     'Accept': 'application/json',
-                }
+                },
+                mode: 'cors',
+                cache: 'no-cache'
             });
 
             clearTimeout(timeoutId);
