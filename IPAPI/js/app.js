@@ -137,16 +137,10 @@ class IPQueryApp {
     }
 
     async queryIP(ip = '') {
-        // 根据README要求的默认显示字段构建查询
-        const defaultFields = [
-            'status', 'message', 'query', 'country', 'countryCode', 
-            'city', 'zip', 'lat', 'lon', 'timezone',
-            'isp', 'org', 'as', 'asname', 'mobile', 'proxy', 'hosting'
-        ].join(',');
-
+        // 使用Azure Function API代替直接调用ip-api.com
         const url = ip 
-            ? `http://ip-api.com/json/${ip}?fields=${defaultFields}`
-            : `http://ip-api.com/json?fields=${defaultFields}`;
+            ? `/api/ipquery?ip=${encodeURIComponent(ip)}`
+            : `/api/ipquery`;
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时

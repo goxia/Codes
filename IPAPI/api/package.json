@@ -1,0 +1,16 @@
+{
+  "name": "ipapi-functions",
+  "version": "1.0.0",
+  "description": "Azure Functions for IPAPI project",
+  "scripts": {
+    "start": "func start",
+    "test": "echo \"No tests yet...\""
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "@azure/functions": "^4.0.0"
+  },
+  "devDependencies": {
+    "azure-functions-core-tools": "^4.0.0"
+  }
+}
