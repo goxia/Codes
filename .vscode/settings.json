@@ -1,4 +1,0 @@
-{
-    "appService.defaultWebAppToDeploy": "/subscriptions/c9cd347b-0686-4640-88c7-b95f9aebb291/resourceGroups/WebApp/providers/Microsoft.Web/sites/ipapi",
-    "appService.deploySubpath": "IPAPI"
-}
