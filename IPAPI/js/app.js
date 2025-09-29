@@ -144,39 +144,59 @@ class IPQueryApp {
             'isp', 'org', 'as', 'asname', 'mobile', 'proxy', 'hosting'
         ].join(',');
 
-        // 使用HTTPS协议以兼容Azure Static Web Apps的HTTPS环境
-        const url = ip 
-            ? `https://ip-api.com/json/${ip}?fields=${defaultFields}`
-            : `https://ip-api.com/json?fields=${defaultFields}`;
+        // 首先尝试HTTPS，如果失败则尝试备用方案
+        const urls = [
+            // 主要API - HTTPS
+            ip ? `https://ip-api.com/json/${ip}?fields=${defaultFields}` 
+               : `https://ip-api.com/json?fields=${defaultFields}`,
+            // 备用API - 使用JSONP方式
+            ip ? `https://ip-api.com/json/${ip}?fields=${defaultFields}&callback=?`
+               : `https://ip-api.com/json?fields=${defaultFields}&callback=?`
+        ];
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+        for (let i = 0; i < urls.length; i++) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-        try {
-            const response = await fetch(url, {
-                method: 'GET',
-                signal: controller.signal,
-                headers: {
-                    'Accept': 'application/json',
-                },
-                mode: 'cors',
-                cache: 'no-cache'
-            });
+            try {
+                const response = await fetch(urls[i], {
+                    signal: controller.signal,
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
 
-            clearTimeout(timeoutId);
+                clearTimeout(timeoutId);
 
-            if (!response.ok) {
-                throw new Error(`HTTP错误: ${response.status}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // 检查API返回的状态
+                if (data.status === 'fail') {
+                    throw new Error(`API错误: ${data.message || '未知错误'}`);
+                }
+                
+                return data;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                console.log(`尝试URL ${i + 1}失败:`, error.message);
+                
+                // 如果是最后一个URL，抛出错误
+                if (i === urls.length - 1) {
+                    if (error.name === 'AbortError') {
+                        throw new Error('请求超时，请检查网络连接');
+                    }
+                    if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                        throw new Error('CORS错误：无法连接到IP查询服务');
+                    }
+                    throw new Error('所有API尝试均失败: ' + error.message);
+                }
+                // 继续尝试下一个URL
             }
-
-            const data = await response.json();
-            return data;
-        } catch (error) {
-            clearTimeout(timeoutId);
-            if (error.name === 'AbortError') {
-                throw new Error('请求超时，请检查网络连接');
-            }
-            throw new Error('网络请求失败: ' + error.message);
         }
     }
 
