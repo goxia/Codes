@@ -1,9 +1,9 @@
-const CACHE_NAME = 'ip-query-v1.0.0';
+const CACHE_NAME = 'ip-query-v1.0.1';
 const urlsToCache = [
     './',
     './index.html',
-    './styles.css',
-    './app.js',
+    './css/style.css',
+    './js/app.js',
     './manifest.json',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];
@@ -40,30 +40,11 @@ self.addEventListener('activate', event => {
 
 // 拦截网络请求
 self.addEventListener('fetch', event => {
-    // 对于IP-API的请求，使用网络优先策略
-    if (event.request.url.includes('ip-api.com')) {
-        event.respondWith(
-            fetch(event.request)
-                .then(response => {
-                    // 如果网络请求成功，直接返回响应
-                    if (response.ok) {
-                        return response;
-                    }
-                    throw new Error('网络响应不正常');
-                })
-                .catch(() => {
-                    // 网络失败时返回离线提示
-                    return new Response(
-                        JSON.stringify({
-                            status: 'fail',
-                            message: '网络连接失败，请检查您的网络连接'
-                        }),
-                        {
-                            headers: { 'Content-Type': 'application/json' }
-                        }
-                    );
-                })
-        );
+    // 对于API请求和外部服务，跳过Service Worker处理（iOS兼容性）
+    if (event.request.url.includes('api.ipify.org') || 
+        event.request.url.includes('ip-api.com') ||
+        event.request.url.includes('/api/')) {
+        // 让这些请求直接通过，不使用Service Worker
         return;
     }
 
@@ -79,27 +60,54 @@ self.addEventListener('fetch', event => {
                 // 否则从网络获取
                 return fetch(event.request)
                     .then(response => {
-                        // 检查响应是否有效
-                        if (!response || response.status !== 200 || response.type !== 'basic') {
-                            return response;
+                        // 确保响应有效
+                        if (!response) {
+                            throw new Error('No response received');
                         }
 
-                        // 克隆响应
-                        const responseToCache = response.clone();
-
-                        caches.open(CACHE_NAME)
-                            .then(cache => {
-                                cache.put(event.request, responseToCache);
-                            });
+                        // 检查响应是否可缓存
+                        if (response.status === 200 && response.type === 'basic') {
+                            // 克隆响应用于缓存
+                            const responseToCache = response.clone();
+                            
+                            caches.open(CACHE_NAME)
+                                .then(cache => {
+                                    cache.put(event.request, responseToCache);
+                                })
+                                .catch(error => {
+                                    console.log('缓存失败:', error);
+                                });
+                        }
 
                         return response;
                     })
-                    .catch(() => {
+                    .catch(error => {
+                        console.log('网络请求失败:', error);
                         // 网络请求失败时的降级处理
                         if (event.request.destination === 'document') {
-                            return caches.match('./index.html');
+                            return caches.match('./index.html').then(fallbackResponse => {
+                                return fallbackResponse || new Response('离线模式', {
+                                    status: 200,
+                                    headers: { 'Content-Type': 'text/html' }
+                                });
+                            });
                         }
+                        // 对于其他资源，返回一个基本的错误响应
+                        return new Response('资源不可用', {
+                            status: 404,
+                            headers: { 'Content-Type': 'text/plain' }
+                        });
                     });
+            })
+            .catch(error => {
+                console.log('缓存匹配失败:', error);
+                // 如果缓存匹配也失败，直接网络请求
+                return fetch(event.request).catch(() => {
+                    return new Response('服务不可用', {
+                        status: 503,
+                        headers: { 'Content-Type': 'text/plain' }
+                    });
+                });
             })
     );
 });
