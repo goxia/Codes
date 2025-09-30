@@ -160,6 +160,7 @@ class IPQueryApp {
         } catch (error) {
             console.error('自动查询失败:', error);
             this.showError('自动查询失败: ' + error.message);
+            this.showToast('自动查询失败，请尝试手动查询', 'error');
         }
     }
 
@@ -196,29 +197,68 @@ class IPQueryApp {
         }
     }
 
-    // 获取客户端真实IP地址
+    // 获取客户端真实IP地址 - iOS兼容版本
     async getRealClientIP() {
         try {
-            // 使用ipify.org - 最简单可靠的IP获取服务
+            // 创建AbortController用于超时控制（iOS兼容）
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8秒超时
+
             const response = await fetch('https://api.ipify.org?format=json', {
-                headers: { 'Accept': 'application/json' },
-                timeout: 5000
+                method: 'GET',
+                headers: { 
+                    'Accept': 'application/json',
+                    'Cache-Control': 'no-cache'
+                },
+                signal: controller.signal
             });
+
+            clearTimeout(timeoutId);
+            
+            console.log('IP获取响应状态:', response.status);
 
             if (response.ok) {
                 const data = await response.json();
                 const ip = data.ip;
                 
+                console.log('获取到的IP数据:', data);
+                
                 if (ip && this.isValidIP(ip)) {
-                    console.log('获取到客户端IP:', ip);
+                    console.log('验证通过，客户端IP:', ip);
                     return ip;
                 }
             }
             
-            throw new Error('IP获取服务返回无效数据');
+            throw new Error(`IP服务响应异常 (状态: ${response.status})`);
         } catch (error) {
-            console.error('获取真实IP失败:', error.message);
-            throw error;
+            console.error('获取真实IP详细错误:', error);
+            
+            if (error.name === 'AbortError') {
+                throw new Error('请求超时，请检查网络连接');
+            }
+            
+            // 尝试备用服务
+            try {
+                console.log('尝试备用IP服务...');
+                const backupResponse = await fetch('https://httpbin.org/ip', {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+                
+                if (backupResponse.ok) {
+                    const backupData = await backupResponse.json();
+                    const backupIP = backupData.origin;
+                    
+                    if (backupIP && this.isValidIP(backupIP)) {
+                        console.log('从备用服务获取到IP:', backupIP);
+                        return backupIP;
+                    }
+                }
+            } catch (backupError) {
+                console.error('备用服务也失败:', backupError);
+            }
+            
+            throw new Error('无法获取IP地址：' + error.message);
         }
     }
 
