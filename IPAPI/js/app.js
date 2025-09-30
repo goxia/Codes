@@ -249,8 +249,32 @@ class IPQueryApp {
                 throw new Error('请求超时，请检查网络连接');
             }
             
-            // 简化错误处理，减少等待时间
-            console.log('IP获取失败，跳过备用服务以提高速度');
+            // 如果是CORS错误，使用我们自己的API作为fallback
+            if (error.message.includes('CORS') || error.message.includes('fetch')) {
+                console.log('检测到CORS或网络问题，使用内部API获取IP...');
+                try {
+                    // 使用我们自己的API，不传IP参数让它返回请求来源IP
+                    const fallbackResponse = await fetch('/api/ipquery', {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    
+                    if (fallbackResponse.ok) {
+                        const fallbackData = await fallbackResponse.json();
+                        const fallbackIP = fallbackData.query;
+                        
+                        if (fallbackIP && this.isValidIP(fallbackIP)) {
+                            console.log('从内部API获取到IP:', fallbackIP);
+                            // 缓存获取到的IP
+                            this.cachedClientIP = fallbackIP;
+                            this.clientIPCacheTime = Date.now();
+                            return fallbackIP;
+                        }
+                    }
+                } catch (fallbackError) {
+                    console.error('内部API也失败:', fallbackError);
+                }
+            }
             
             throw new Error('无法获取IP地址：' + error.message);
         }
