@@ -1,5 +1,7 @@
 class IPQueryApp {
     constructor() {
+        this.version = '1.2.3'; // 应用版本号
+        this.checkCacheVersion(); // 检查并清理过期缓存
         this.initializeElements();
         this.bindEvents();
         this.cache = new Map();
@@ -209,20 +211,15 @@ class IPQueryApp {
         }
 
         try {
-            // 创建AbortController用于超时控制（iOS兼容）
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时，加快响应
-
+            console.log('尝试获取客户端IP...');
+            
+            // 简化的fetch请求，iOS兼容性更好
             const response = await fetch('https://api.ipify.org?format=json', {
                 method: 'GET',
-                headers: { 
-                    'Accept': 'application/json',
-                    'Cache-Control': 'no-cache'
-                },
-                signal: controller.signal
+                headers: { 'Accept': 'application/json' }
             });
-
-            clearTimeout(timeoutId);
+            
+            console.log('外部IP服务响应:', response);
             
             console.log('IP获取响应状态:', response.status);
 
@@ -249,9 +246,13 @@ class IPQueryApp {
                 throw new Error('请求超时，请检查网络连接');
             }
             
-            // 如果是CORS错误，使用我们自己的API作为fallback
-            if (error.message.includes('CORS') || error.message.includes('fetch')) {
-                console.log('检测到CORS或网络问题，使用内部API获取IP...');
+            // 如果是CORS、网络错误或load failed，使用我们自己的API作为fallback
+            if (error.message.includes('CORS') || 
+                error.message.includes('fetch') || 
+                error.message.includes('load') ||
+                error.message.includes('Failed') ||
+                error.name === 'TypeError') {
+                console.log('检测到网络问题，使用内部API获取IP...');
                 try {
                     // 使用我们自己的API，不传IP参数让它返回请求来源IP
                     const fallbackResponse = await fetch('/api/ipquery', {
@@ -525,6 +526,73 @@ AS号码: ${data.asNumber}
         if (this.cache.size > 50) {
             const firstKey = this.cache.keys().next().value;
             this.cache.delete(firstKey);
+        }
+    }
+
+    // 检查缓存版本并清理过期缓存
+    checkCacheVersion() {
+        try {
+            const storedVersion = localStorage.getItem('ipapi_version');
+            const now = Date.now();
+            
+            // 如果版本不匹配或者超过24小时，清理所有缓存
+            if (storedVersion !== this.version) {
+                console.log(`版本更新: ${storedVersion} -> ${this.version}, 清理缓存`);
+                this.clearAllCache();
+                localStorage.setItem('ipapi_version', this.version);
+                localStorage.setItem('ipapi_cache_clear_time', now.toString());
+            } else {
+                // 即使版本相同，也检查是否需要定期清理缓存（24小时）
+                const lastClearTime = localStorage.getItem('ipapi_cache_clear_time');
+                if (!lastClearTime || (now - parseInt(lastClearTime)) > 24 * 60 * 60 * 1000) {
+                    console.log('定期清理缓存（24小时）');
+                    this.clearAllCache();
+                    localStorage.setItem('ipapi_cache_clear_time', now.toString());
+                }
+            }
+        } catch (error) {
+            console.warn('缓存版本检查失败:', error);
+        }
+    }
+
+    // 清理所有缓存
+    clearAllCache() {
+        try {
+            // 清理应用内缓存
+            if (this.cache) {
+                this.cache.clear();
+            }
+            this.cachedClientIP = null;
+            this.clientIPCacheTime = null;
+
+            // 清理localStorage中的相关数据
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.startsWith('ipapi_') || key.startsWith('ip_cache_'))) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => {
+                if (key !== 'ipapi_version' && key !== 'ipapi_cache_clear_time') {
+                    localStorage.removeItem(key);
+                }
+            });
+
+            // 尝试清理浏览器缓存（如果支持的话）
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => {
+                        if (name.includes('ipapi') || name.includes('v1')) {
+                            caches.delete(name);
+                        }
+                    });
+                }).catch(err => console.warn('清理caches失败:', err));
+            }
+
+            console.log('缓存清理完成');
+        } catch (error) {
+            console.warn('缓存清理失败:', error);
         }
     }
 }
