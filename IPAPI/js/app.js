@@ -144,17 +144,17 @@ class IPQueryApp {
         try {
             this.showLoading();
             
-            // 获取客户端真实IP
+            // 获取客户端真实IP（确保使用外部服务）
             const realIP = await this.getRealClientIP();
             
             if (realIP) {
-                console.log('获取到客户端IP:', realIP);
+                console.log('获取到客户端真实IP:', realIP);
                 // 使用真实IP查询详细信息
                 const result = await this.queryIP(realIP);
                 
                 if (result && result.status === 'success') {
                     this.displayResults(result);
-                    this.showToast('自动查询成功', 'success');
+                    this.showToast('自动查询成功 - 显示您的真实IP信息', 'success');
                 } else {
                     throw new Error(result.message || '查询失败');
                 }
@@ -163,8 +163,9 @@ class IPQueryApp {
             }
         } catch (error) {
             console.error('自动查询失败:', error);
-            this.showError('自动查询失败: ' + error.message);
-            this.showToast('自动查询失败，请尝试手动查询', 'error');
+            this.hideLoading();
+            // 如果自动查询失败，显示提示但不显示错误
+            this.showToast('无法自动获取IP信息，请点击"查询我的IP"手动获取', 'info');
         }
     }
 
@@ -246,35 +247,57 @@ class IPQueryApp {
                 throw new Error('请求超时，请检查网络连接');
             }
             
-            // 如果是CORS、网络错误或load failed，使用我们自己的API作为fallback
+            // 如果是CORS、网络错误或load failed，尝试其他外部IP服务
             if (error.message.includes('CORS') || 
                 error.message.includes('fetch') || 
                 error.message.includes('load') ||
                 error.message.includes('Failed') ||
                 error.name === 'TypeError') {
-                console.log('检测到网络问题，使用内部API获取IP...');
-                try {
-                    // 使用我们自己的API，不传IP参数让它返回请求来源IP
-                    const fallbackResponse = await fetch('/api/ipquery', {
-                        method: 'GET',
-                        headers: { 'Accept': 'application/json' }
-                    });
-                    
-                    if (fallbackResponse.ok) {
-                        const fallbackData = await fallbackResponse.json();
-                        const fallbackIP = fallbackData.query;
+                console.log('检测到网络问题，尝试备用IP服务...');
+                
+                // 备用IP服务列表
+                const backupServices = [
+                    'https://ipinfo.io/json',
+                    'https://api.ipify.org?format=json',
+                    'https://httpbin.org/ip'
+                ];
+                
+                for (let i = 0; i < backupServices.length; i++) {
+                    try {
+                        console.log(`尝试备用服务 ${i + 1}:`, backupServices[i]);
+                        const fallbackResponse = await fetch(backupServices[i], {
+                            method: 'GET',
+                            headers: { 'Accept': 'application/json' }
+                        });
                         
-                        if (fallbackIP && this.isValidIP(fallbackIP)) {
-                            console.log('从内部API获取到IP:', fallbackIP);
-                            // 缓存获取到的IP
-                            this.cachedClientIP = fallbackIP;
-                            this.clientIPCacheTime = Date.now();
-                            return fallbackIP;
+                        if (fallbackResponse.ok) {
+                            const fallbackData = await fallbackResponse.json();
+                            let fallbackIP = null;
+                            
+                            // 不同服务返回格式不同
+                            if (fallbackData.ip) {
+                                fallbackIP = fallbackData.ip;
+                            } else if (fallbackData.origin) {
+                                fallbackIP = fallbackData.origin;
+                            } else if (typeof fallbackData === 'string') {
+                                fallbackIP = fallbackData.trim();
+                            }
+                            
+                            if (fallbackIP && this.isValidIP(fallbackIP)) {
+                                console.log(`从备用服务获取到IP:`, fallbackIP);
+                                // 缓存获取到的IP
+                                this.cachedClientIP = fallbackIP;
+                                this.clientIPCacheTime = Date.now();
+                                return fallbackIP;
+                            }
                         }
+                    } catch (serviceError) {
+                        console.error(`备用服务 ${i + 1} 失败:`, serviceError);
+                        continue;
                     }
-                } catch (fallbackError) {
-                    console.error('内部API也失败:', fallbackError);
                 }
+                
+                console.error('所有备用IP服务都失败了');
             }
             
             throw new Error('无法获取IP地址：' + error.message);
@@ -490,20 +513,24 @@ AS号码: ${data.asNumber}
         
         // 设置图标和样式
         const icon = this.toast.querySelector('i');
-        icon.className = type === 'error' 
-            ? 'fas fa-exclamation-circle' 
-            : 'fas fa-check-circle';
-        
-        this.toast.style.background = type === 'error' 
-            ? 'var(--error-color)' 
-            : 'var(--success-color)';
+        if (type === 'error') {
+            icon.className = 'fas fa-exclamation-circle';
+            this.toast.style.background = 'var(--error-color)';
+        } else if (type === 'info') {
+            icon.className = 'fas fa-info-circle';
+            this.toast.style.background = '#3498db'; // 蓝色信息提示
+        } else {
+            icon.className = 'fas fa-check-circle';
+            this.toast.style.background = 'var(--success-color)';
+        }
         
         this.toast.classList.add('show');
         
-        // 3秒后自动隐藏
+        // 根据类型调整显示时间
+        const duration = type === 'info' ? 4000 : 3000;
         setTimeout(() => {
             this.toast.classList.remove('show');
-        }, 3000);
+        }, duration);
     }
 
     // 缓存相关方法
