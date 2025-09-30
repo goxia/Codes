@@ -4,6 +4,8 @@ class IPQueryApp {
         this.bindEvents();
         this.cache = new Map();
         this.cacheTimeout = 5 * 60 * 1000; // 5分钟缓存
+        this.cachedClientIP = null; // 缓存客户端IP
+        this.clientIPCacheTime = null;
     }
 
     initializeElements() {
@@ -199,10 +201,17 @@ class IPQueryApp {
 
     // 获取客户端真实IP地址 - iOS兼容版本
     async getRealClientIP() {
+        // 检查缓存（5分钟内有效）
+        if (this.cachedClientIP && this.clientIPCacheTime && 
+            (Date.now() - this.clientIPCacheTime < 5 * 60 * 1000)) {
+            console.log('使用缓存的客户端IP:', this.cachedClientIP);
+            return this.cachedClientIP;
+        }
+
         try {
             // 创建AbortController用于超时控制（iOS兼容）
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8秒超时
+            const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时，加快响应
 
             const response = await fetch('https://api.ipify.org?format=json', {
                 method: 'GET',
@@ -225,6 +234,9 @@ class IPQueryApp {
                 
                 if (ip && this.isValidIP(ip)) {
                     console.log('验证通过，客户端IP:', ip);
+                    // 缓存IP地址
+                    this.cachedClientIP = ip;
+                    this.clientIPCacheTime = Date.now();
                     return ip;
                 }
             }
@@ -237,26 +249,8 @@ class IPQueryApp {
                 throw new Error('请求超时，请检查网络连接');
             }
             
-            // 尝试备用服务
-            try {
-                console.log('尝试备用IP服务...');
-                const backupResponse = await fetch('https://httpbin.org/ip', {
-                    method: 'GET',
-                    headers: { 'Accept': 'application/json' }
-                });
-                
-                if (backupResponse.ok) {
-                    const backupData = await backupResponse.json();
-                    const backupIP = backupData.origin;
-                    
-                    if (backupIP && this.isValidIP(backupIP)) {
-                        console.log('从备用服务获取到IP:', backupIP);
-                        return backupIP;
-                    }
-                }
-            } catch (backupError) {
-                console.error('备用服务也失败:', backupError);
-            }
+            // 简化错误处理，减少等待时间
+            console.log('IP获取失败，跳过备用服务以提高速度');
             
             throw new Error('无法获取IP地址：' + error.message);
         }
@@ -333,8 +327,7 @@ class IPQueryApp {
         this.updateElement('timezone', data.timezone || '-');
         this.updateElement('zip', data.zip || '-');
 
-        // 滚动到结果区域
-        this.resultSection.scrollIntoView({ behavior: 'smooth' });
+        // 移除自动滚动 - 让用户控制页面位置
     }
 
     updateElement(elementId, value) {
