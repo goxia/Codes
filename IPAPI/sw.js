@@ -38,76 +38,34 @@ self.addEventListener('activate', event => {
     );
 });
 
-// 拦截网络请求
+// 拦截网络请求 - 简化版本，只缓存静态资源
 self.addEventListener('fetch', event => {
-    // 对于API请求和外部服务，跳过Service Worker处理（iOS兼容性）
-    if (event.request.url.includes('api.ipify.org') || 
+    const url = new URL(event.request.url);
+    
+    // 只处理同源的静态资源，所有API请求都不拦截
+    if (url.origin !== location.origin || 
+        event.request.url.includes('/api/') ||
+        event.request.url.includes('api.ipify.org') || 
         event.request.url.includes('ip-api.com') ||
-        event.request.url.includes('/api/')) {
-        // 让这些请求直接通过，不使用Service Worker
+        event.request.method !== 'GET') {
+        // 完全不处理这些请求，让它们自然通过
         return;
     }
 
-    // 对于其他资源，使用缓存优先策略
+    // 只对本地静态文件使用缓存
     event.respondWith(
         caches.match(event.request)
             .then(response => {
-                // 如果缓存中有，直接返回
                 if (response) {
                     return response;
                 }
-
-                // 否则从网络获取
-                return fetch(event.request)
-                    .then(response => {
-                        // 确保响应有效
-                        if (!response) {
-                            throw new Error('No response received');
-                        }
-
-                        // 检查响应是否可缓存
-                        if (response.status === 200 && response.type === 'basic') {
-                            // 克隆响应用于缓存
-                            const responseToCache = response.clone();
-                            
-                            caches.open(CACHE_NAME)
-                                .then(cache => {
-                                    cache.put(event.request, responseToCache);
-                                })
-                                .catch(error => {
-                                    console.log('缓存失败:', error);
-                                });
-                        }
-
-                        return response;
-                    })
-                    .catch(error => {
-                        console.log('网络请求失败:', error);
-                        // 网络请求失败时的降级处理
-                        if (event.request.destination === 'document') {
-                            return caches.match('./index.html').then(fallbackResponse => {
-                                return fallbackResponse || new Response('离线模式', {
-                                    status: 200,
-                                    headers: { 'Content-Type': 'text/html' }
-                                });
-                            });
-                        }
-                        // 对于其他资源，返回一个基本的错误响应
-                        return new Response('资源不可用', {
-                            status: 404,
-                            headers: { 'Content-Type': 'text/plain' }
-                        });
-                    });
+                return fetch(event.request);
             })
-            .catch(error => {
-                console.log('缓存匹配失败:', error);
-                // 如果缓存匹配也失败，直接网络请求
-                return fetch(event.request).catch(() => {
-                    return new Response('服务不可用', {
-                        status: 503,
-                        headers: { 'Content-Type': 'text/plain' }
-                    });
-                });
+            .catch(() => {
+                // 简单的fallback
+                if (event.request.destination === 'document') {
+                    return caches.match('./index.html');
+                }
             })
     );
 });

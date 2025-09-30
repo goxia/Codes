@@ -477,8 +477,8 @@ document.addEventListener('DOMContentLoaded', () => {
     window.ipQueryApp = new IPQueryApp();
 });
 
-// Service Worker注册（如果支持）
-if ('serviceWorker' in navigator) {
+// Service Worker注册（临时禁用以修复iOS问题）
+if ('serviceWorker' in navigator && false) { // 临时禁用
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
             .then(registration => {
