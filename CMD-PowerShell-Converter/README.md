@@ -132,10 +132,6 @@ cmd-powershell-converter/
 - **离线优先**: 不依赖网络连接运行
 - **开源透明**: 代码完全开源可审计
 
-## 许可证
-
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
-
 ## 联系方式
 
 - 项目地址: [GitHub Repository]
@@ -143,5 +139,6 @@ cmd-powershell-converter/
 - 功能建议: [GitHub Discussions]
 
 ---
+
 
 **享受现代化的命令转换体验！** 🚀
