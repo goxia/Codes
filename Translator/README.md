@@ -15,7 +15,9 @@
 
 ## 当前状态
 
-🚧 **开发阶段** - 目前使用 Mock API 进行 UI/UX 验证
+✅ **已部署到生产环境** - 使用 Azure Translator 和 Speech Services
+- 🌐 在线访问: [Azure Static Web Apps](https://ats.mdt.link)
+- 📱 支持移动端优化布局
 
 ## 本地开发
 
