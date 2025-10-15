@@ -286,11 +286,11 @@ export default function TranslatorApp() {
       </header>
 
       {/* 主内容区 */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
         {!showHistory ? (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* 语言选择栏 - 简化版 */}
-            <div className="bg-white rounded-xl shadow-sm p-4">
+            <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4">
               <div className="flex items-center justify-center space-x-3">
                 <div className="flex items-center space-x-2 px-4 py-2 bg-gray-50 rounded-lg">
                   <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -349,7 +349,7 @@ export default function TranslatorApp() {
             <div className="grid md:grid-cols-2 gap-6">
               {/* 源文本 */}
               <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-gray-200">
+                <div className="p-3 sm:p-4 border-b border-gray-200">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-gray-700">源文本</span>
                     <div className="flex space-x-2">
@@ -379,15 +379,15 @@ export default function TranslatorApp() {
                   value={sourceText}
                   onChange={(e) => setSourceText(e.target.value)}
                   placeholder="输入要翻译的文本..."
-                  className="w-full h-64 p-4 resize-none focus:outline-none text-lg"
+                  className="w-full h-32 sm:h-48 md:h-64 p-3 sm:p-4 resize-none focus:outline-none text-base sm:text-lg"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                       handleTranslate();
                     }
                   }}
                 />
-                <div className="p-4 border-t border-gray-200 flex items-center justify-between">
-                  <span className="text-sm text-gray-500">{sourceText.length} 字符</span>
+                <div className="p-3 sm:p-4 border-t border-gray-200 flex items-center justify-between">
+                  <span className="text-xs sm:text-sm text-gray-500">{sourceText.length} 字符</span>
                   <button
                     onClick={() => handleSpeak(sourceText, sourceLang === 'auto' ? detectedLang : sourceLang)}
                     disabled={!sourceText}
@@ -403,7 +403,7 @@ export default function TranslatorApp() {
 
               {/* 目标文本 */}
               <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-gray-200">
+                <div className="p-3 sm:p-4 border-b border-gray-200">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-gray-700">翻译结果</span>
                     <button
@@ -418,7 +418,7 @@ export default function TranslatorApp() {
                     </button>
                   </div>
                 </div>
-                <div className="w-full h-64 p-4 overflow-y-auto text-lg text-gray-800 whitespace-pre-wrap">
+                <div className="w-full h-32 sm:h-48 md:h-64 p-3 sm:p-4 overflow-y-auto text-base sm:text-lg text-gray-800 whitespace-pre-wrap">
                   {isTranslating ? (
                     <div className="flex items-center justify-center h-full">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
@@ -427,8 +427,8 @@ export default function TranslatorApp() {
                     targetText || <span className="text-gray-400">翻译结果将显示在这里...</span>
                   )}
                 </div>
-                <div className="p-4 border-t border-gray-200 flex items-center justify-between">
-                  <span className="text-sm text-gray-500">{targetText.length} 字符</span>
+                <div className="p-3 sm:p-4 border-t border-gray-200 flex items-center justify-between">
+                  <span className="text-xs sm:text-sm text-gray-500">{targetText.length} 字符</span>
                   <button
                     onClick={() => handleSpeak(targetText, targetLang)}
                     disabled={!targetText}
@@ -443,12 +443,12 @@ export default function TranslatorApp() {
               </div>
             </div>
 
-            {/* 翻译按钮 */}
-            <div className="flex justify-center">
+            {/* 翻译按钮 - 固定在底部或正常位置 */}
+            <div className="flex justify-center pb-safe">
               <button
                 onClick={handleTranslate}
                 disabled={!sourceText.trim() || isTranslating}
-                className="px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {isTranslating ? '翻译中...' : '翻译 (Ctrl+Enter)'}
               </button>
