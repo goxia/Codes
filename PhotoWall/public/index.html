@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhotoWall - 照片墙</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- 使用完整版exifr以支持所有格式 -->
+    <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
+</head>
+<body>
+    <header>
+        <h1>📸 PhotoWall</h1>
+        <p class="subtitle">我的照片时光墙</p>
+        <button class="slideshow-btn" id="startSlideshow">
+            <span class="icon">▶</span> 开始幻灯片
+        </button>
+    </header>
+
+    <main>
+        <div class="filters">
+            <button class="filter-btn active" data-year="all">全部</button>
+            <div id="year-filters"></div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>加载中...</p>
+        </div>
+
+        <div class="photo-grid" id="photoGrid">
+            <!-- 照片将动态加载到这里 -->
+        </div>
+    </main>
+
+    <!-- 灯箱效果 -->
+    <div class="lightbox" id="lightbox">
+        <span class="close" id="closeLightbox">&times;</span>
+        <div class="lightbox-content-container">
+            <img class="lightbox-content" id="lightboxImg" alt="照片预览">
+        </div>
+        <div class="lightbox-info">
+            <p id="photoInfo"></p>
+        </div>
+        <button class="nav-btn prev" id="prevBtn">&#10094;</button>
+        <button class="nav-btn next" id="nextBtn">&#10095;</button>
+    </div>
+
+    <!-- 幻灯片模式 -->
+    <div class="slideshow-mode" id="slideshowMode">
+        <!-- 日期时间显示 -->
+        <div class="datetime-display">
+            <div class="datetime-date" id="currentDate">2025-10-10</div>
+            <div class="datetime-time" id="currentTime">12:00:00</div>
+        </div>
+        
+        <!-- 天气信息显示 -->
+        <div class="weather-display">
+            <div class="weather-location" id="weatherLocation">Beijing</div>
+            <div class="weather-temp" id="weatherTemp">20°</div>
+            <div class="weather-condition" id="weatherCondition">sunny ☀️</div>
+            <div class="weather-forecast" id="weatherForecast">
+                <span>Mon<br>18°</span>
+                <span>Tue<br>19°</span>
+                <span>Wed<br>17°</span>
+            </div>
+        </div>
+        
+        <div class="slideshow-container">
+            <!-- 内容将通过JavaScript动态生成 -->
+        </div>
+        
+        <!-- EXIF信息显示 -->
+        <div class="exif-display" id="exifDisplay">
+            <div class="exif-camera" id="exifCamera">Canon EOS R5</div>
+            <div class="exif-datetime" id="exifDatetime"></div>
+            <div class="exif-location" id="exifLocation"></div>
+            <div class="exif-settings" id="exifSettings">
+                <span id="exifFocalLength">24mm</span>
+                <span id="exifAperture">f/2.8</span>
+                <span id="exifShutter">1/200s</span>
+                <span id="exifISO">ISO 400</span>
+            </div>
+        </div>
+        
+        <div class="slideshow-info">
+            <div class="photo-meta" id="slideshowMeta">
+                <div class="photo-date-time"></div>
+                <div class="photo-filename"></div>
+            </div>
+        </div>
+
+        <div class="slideshow-controls">
+            <button class="control-btn" id="slideshowPrev" title="上一张">
+                <span>&#10094;</span>
+            </button>
+            <button class="control-btn" id="slideshowPlayPause" title="播放/暂停">
+                <span id="playPauseIcon">⏸</span>
+            </button>
+            <button class="control-btn" id="slideshowNext" title="下一张">
+                <span>&#10095;</span>
+            </button>
+            <button class="control-btn" id="exitSlideshow" title="退出幻灯片">
+                <span>✕</span>
+            </button>
+            
+            <div class="speed-control">
+                <label for="speedSlider">速度：</label>
+                <input type="range" id="speedSlider" min="2" max="15" value="5" step="1">
+                <span id="speedValue">5s</span>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            
+            <div class="photo-counter">
+                <span id="currentIndex">1</span> / <span id="totalPhotos">0</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

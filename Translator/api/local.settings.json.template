@@ -1,0 +1,15 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "TRANSLATOR_KEY": "在这里填入你的 Translator KEY 1 或 KEY 2",
+    "TRANSLATOR_REGION": "global",
+    "SPEECH_KEY": "在这里填入你的 Speech KEY 1 或 KEY 2",
+    "SPEECH_REGION": "eastus2"
+  },
+  "Host": {
+    "CORS": "*",
+    "CORSCredentials": false
+  }
+}

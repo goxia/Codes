@@ -1,0 +1,64 @@
+{
+  "name": "cmd-powershell-converter",
+  "version": "1.0.0",
+  "description": "CMD to PowerShell command converter - A modern web application for converting between CMD and PowerShell commands",
+  "keywords": [
+    "cmd",
+    "powershell",
+    "converter",
+    "pwa",
+    "windows",
+    "command-line",
+    "terminal"
+  ],
+  "author": "Developer",
+  "license": "MIT",
+  "homepage": "https://cmd-powershell-converter.azurewebsites.net",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/cmd-powershell-converter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/cmd-powershell-converter/issues"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "scripts": {
+    "start": "npx serve . -p 3000",
+    "dev": "npx serve . -p 3000",
+    "build": "echo 'Static site - no build needed'",
+    "test": "echo 'No tests configured yet'",
+    "lint": "echo 'No linting configured yet'",
+    "preview": "npx serve . -p 4173"
+  },
+  "devDependencies": {
+    "serve": "^14.2.1"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ],
+  "pwa": {
+    "name": "CMD PowerShell 转换器",
+    "short_name": "CMD2PS",
+    "description": "CMD到PowerShell命令转换器",
+    "theme_color": "#2196F3",
+    "background_color": "#ffffff",
+    "display": "standalone",
+    "orientation": "any",
+    "scope": "/",
+    "start_url": "/"
+  },
+  "files": [
+    "index.html",
+    "manifest.json",
+    "sw.js",
+    "styles/",
+    "js/",
+    "icons/",
+    "README.md"
+  ]
+}

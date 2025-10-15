@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="IP地址查询工具 - 基于ip-api.com接口的现代化Web应用">
+    <meta name="theme-color" content="#3b82f6">
+    <title>IP查询工具 - IP-API</title>
+    
+    <!-- 版本信息和缓存控制 -->
+    <meta name="version" content="1.2.3">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <!-- PWA相关 -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/svg+xml" href="icons/logo.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    
+    <!-- 样式文件 -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- 图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">
+                <i class="fas fa-globe"></i>
+                IP查询工具
+            </h1>
+            <p class="subtitle">快速查询IP地址的地理位置和网络信息</p>
+        </header>
+
+        <main class="main">
+            <!-- 搜索区域 -->
+            <section class="search-section">
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="ipInput" 
+                        class="ip-input" 
+                        placeholder="输入IP地址（留空查询当前IP）"
+                        pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+                    >
+                    <button id="searchBtn" class="search-btn">
+                        <i class="fas fa-search"></i>
+                        查询
+                    </button>
+                </div>
+                <div class="quick-actions">
+                    <button id="myIpBtn" class="quick-btn">
+                        <i class="fas fa-user"></i>
+                        查询我的IP
+                    </button>
+                    <button id="clearBtn" class="quick-btn secondary">
+                        <i class="fas fa-eraser"></i>
+                        清除
+                    </button>
+                </div>
+            </section>
+
+            <!-- 加载状态 -->
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <p>正在查询中...</p>
+            </div>
+
+            <!-- 结果显示区域 -->
+            <section id="resultSection" class="result-section hidden">
+                <div class="result-header">
+                    <h2 class="result-title">查询结果</h2>
+                    <button id="copyBtn" class="copy-btn" title="复制结果">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+
+                <div class="result-grid">
+                    <!-- IP地址信息 -->
+                    <div class="info-card">
+                        <div class="card-header">
+                            <i class="fas fa-network-wired"></i>
+                            <h3>IP地址信息</h3>
+                        </div>
+                        <div class="info-item">
+                            <label>IP地址:</label>
+                            <span id="ipAddress" class="value">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>国家代码:</label>
+                            <span id="countryCode" class="value">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>国家:</label>
+                            <span id="country" class="value">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>城市:</label>
+                            <span id="city" class="value">-</span>
+                        </div>
+                    </div>
+
+                    <!-- 网络服务商信息 -->
+                    <div class="info-card">
+                        <div class="card-header">
+                            <i class="fas fa-building"></i>
+                            <h3>网络服务商</h3>
+                        </div>
+                        <div class="info-item">
+                            <label>ISP:</label>
+                            <span id="isp" class="value">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>组织:</label>
+                            <span id="org" class="value">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>AS名称:</label>
+                            <span id="asname" class="value">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>AS号码:</label>
+                            <span id="asNumber" class="value">-</span>
+                        </div>
+                    </div>
+
+                    <!-- 网络类型信息 -->
+                    <div class="info-card">
+                        <div class="card-header">
+                            <i class="fas fa-tags"></i>
+                            <h3>网络类型</h3>
+                        </div>
+                        <div class="info-item">
+                            <label>移动网络:</label>
+                            <span id="mobile" class="value badge">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>代理服务器:</label>
+                            <span id="proxy" class="value badge">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>托管服务:</label>
+                            <span id="hosting" class="value badge">-</span>
+                        </div>
+                    </div>
+
+                    <!-- 地理位置信息 -->
+                    <div class="info-card">
+                        <div class="card-header">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <h3>地理位置</h3>
+                        </div>
+                        <div class="info-item">
+                            <label>纬度:</label>
+                            <span id="latitude" class="value">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>经度:</label>
+                            <span id="longitude" class="value">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>时区:</label>
+                            <span id="timezone" class="value">-</span>
+                        </div>
+                        <div class="info-item">
+                            <label>邮编:</label>
+                            <span id="zip" class="value">-</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 错误信息显示 -->
+            <div id="errorSection" class="error-section hidden">
+                <div class="error-card">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>查询失败</h3>
+                    <p id="errorMessage">请检查IP地址格式或网络连接</p>
+                    <button id="retryBtn" class="retry-btn">
+                        <i class="fas fa-redo"></i>
+                        重试
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>
+                <i class="fas fa-heart"></i>
+                基于 <a href="https://ip-api.com" target="_blank">IP-API.com</a> 接口开发
+            </p>
+            <p class="version">v1.0.0</p>
+        </footer>
+    </div>
+
+    <!-- 通知提示 -->
+    <div id="toast" class="toast hidden">
+        <div class="toast-content">
+            <i class="fas fa-check-circle"></i>
+            <span id="toastMessage">操作成功</span>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/app.js"></script>
+</body>
+</html>

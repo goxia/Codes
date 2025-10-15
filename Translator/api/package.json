@@ -1,0 +1,20 @@
+{
+  "name": "translator-api",
+  "version": "1.0.0",
+  "description": "Azure Functions backend for Translator PWA",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "start": "func start",
+    "prestart": "npm run build"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.5.0",
+    "axios": "^1.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}

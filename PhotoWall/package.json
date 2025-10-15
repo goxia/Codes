@@ -1,0 +1,23 @@
+{
+  "name": "photowall",
+  "version": "1.0.0",
+  "description": "A lightweight web-based photo display application",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "photo",
+    "gallery",
+    "web"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "exifr": "^7.1.3",
+    "express": "^4.18.2",
+    "heic-convert": "^2.1.0",
+    "sharp": "^0.34.4"
+  }
+}
