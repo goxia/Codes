@@ -106,13 +106,9 @@ export default function TranslatorApp() {
   const [detectedLang, setDetectedLang] = useState('');
   const sourceTextareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // 智能切换目标语言：如果源文本是中文就翻译成英文，反之亦然
-  const smartToggleLanguage = () => {
-    if (targetLang === 'zh-Hans') {
-      setTargetLang('en');
-    } else {
-      setTargetLang('zh-Hans');
-    }
+  // 手动切换目标语言
+  const toggleTargetLanguage = () => {
+    setTargetLang(prev => prev === 'zh-Hans' ? 'en' : 'zh-Hans');
   };
 
   // 加载历史记录
@@ -150,10 +146,10 @@ export default function TranslatorApp() {
 
     setIsTranslating(true);
     setTargetText('');
-    setDetectedLang('');
 
     try {
       let actualSourceLang = sourceLang;
+      let actualTargetLang = targetLang;
       
       // 如果是自动检测，先检测语言
       if (sourceLang === 'auto') {
@@ -162,10 +158,19 @@ export default function TranslatorApp() {
         console.log('✅ 检测到语言:', detected);
         setDetectedLang(detected);
         actualSourceLang = detected;
+        
+        // 智能设置目标语言：检测到中文翻译到英文，否则翻译到中文
+        if (detected === 'zh-Hans' || detected === 'zh-Hant' || detected === 'zh') {
+          actualTargetLang = 'en';
+          setTargetLang('en');
+        } else {
+          actualTargetLang = 'zh-Hans';
+          setTargetLang('zh-Hans');
+        }
       }
 
-      console.log('📡 调用翻译 API:', { text: sourceText, from: actualSourceLang, to: targetLang });
-      const result = await callTranslateAPI(sourceText, actualSourceLang, targetLang);
+      console.log('📡 调用翻译 API:', { text: sourceText, from: actualSourceLang, to: actualTargetLang });
+      const result = await callTranslateAPI(sourceText, actualSourceLang, actualTargetLang);
       console.log('✅ 翻译结果:', result);
       
       // 如果 API 返回了检测到的语言，使用它
@@ -175,7 +180,7 @@ export default function TranslatorApp() {
       }
       
       setTargetText(result.translation);
-      saveToHistory(sourceText, result.translation, actualSourceLang, targetLang);
+      saveToHistory(sourceText, result.translation, actualSourceLang, actualTargetLang);
     } catch (error) {
       console.error('❌ 翻译错误:', error);
       setTargetText('翻译失败，请检查网络连接或稍后重试');
@@ -289,57 +294,60 @@ export default function TranslatorApp() {
       <main className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
         {!showHistory ? (
           <div className="space-y-4 sm:space-y-6">
-            {/* 语言选择栏 - 简化版 */}
+            {/* 语言选择栏 - 中英互译简化版 */}
             <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4">
               <div className="flex items-center justify-center space-x-3">
-                <div className="flex items-center space-x-2 px-4 py-2 bg-gray-50 rounded-lg">
-                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {/* 源语言显示 */}
+                <div className="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg min-w-[100px] justify-center">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
                   </svg>
-                  <span className="font-medium text-gray-700">自动检测</span>
+                  <span className="font-medium text-gray-700 text-sm sm:text-base">
+                    {detectedLang === 'zh-Hans' || detectedLang === 'zh-Hant' || detectedLang === 'zh' ? '中文' : 
+                     detectedLang === 'en' ? 'English' : 
+                     detectedLang ? detectedLang : '自动检测'}
+                  </span>
                 </div>
 
+                {/* 交换按钮 */}
                 <button
                   onClick={handleSwapText}
                   disabled={!targetText}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
                   title="交换文本"
                 >
-                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                   </svg>
                 </button>
 
+                {/* 目标语言切换按钮 */}
                 <button
-                  onClick={smartToggleLanguage}
-                  className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:shadow-md transition-all"
-                  title={targetLang === 'zh-Hans' ? '当前翻译到中文，点击切换到英文' : '当前翻译到英文，点击切换到中文'}
+                  onClick={toggleTargetLanguage}
+                  className="flex items-center space-x-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:shadow-md transition-all min-w-[100px] justify-center"
+                  title="点击切换目标语言"
                 >
-                  {targetLang === 'zh-Hans' ? (
-                    <>
-                      <span className="font-medium">中文</span>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </>
-                  ) : (
-                    <>
-                      <span className="font-medium">English</span>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </>
-                  )}
+                  <span className="font-medium text-sm sm:text-base">
+                    {targetLang === 'zh-Hans' ? '中文' : 'English'}
+                  </span>
+                  <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                  </svg>
                 </button>
               </div>
 
+              {/* 检测语言提示 */}
               {detectedLang && (
                 <div className="mt-3 text-center">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-50 text-blue-700">
-                    <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs sm:text-sm bg-blue-50 text-blue-700">
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    检测到: {detectedLang === 'en' ? 'English' : detectedLang === 'zh-Hans' ? '简体中文' : detectedLang === 'ja' ? '日本語' : detectedLang}
+                    检测到源语言: {detectedLang === 'en' ? 'English' : 
+                                  detectedLang === 'zh-Hans' ? '简体中文' : 
+                                  detectedLang === 'zh-Hant' ? '繁体中文' : 
+                                  detectedLang === 'ja' ? '日本語' : 
+                                  detectedLang}
                   </span>
                 </div>
               )}
