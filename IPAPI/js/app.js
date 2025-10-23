@@ -8,6 +8,8 @@ class IPQueryApp {
         this.cacheTimeout = 5 * 60 * 1000; // 5分钟缓存
         this.cachedClientIP = null; // 缓存客户端IP
         this.clientIPCacheTime = null;
+        this.urlParamQuery = false; // 标记是否通过URL参数查询
+        this.checkURLParams(); // 检查URL参数
     }
 
     initializeElements() {
@@ -86,9 +88,40 @@ class IPQueryApp {
         // 页面加载时自动查询当前IP
         window.addEventListener('load', () => {
             setTimeout(() => {
-                this.handleAutoQuery();
+                // 如果URL中有ip参数，执行URL参数查询；否则执行自动查询
+                if (this.urlParamQuery) {
+                    this.handleSearch();
+                } else {
+                    this.handleAutoQuery();
+                }
             }, 500);
         });
+    }
+
+    // 检查并处理URL参数
+    checkURLParams() {
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const ipParam = urlParams.get('ip');
+            
+            if (ipParam !== null) {
+                // URL中存在ip参数
+                this.urlParamQuery = true;
+                
+                if (ipParam.trim()) {
+                    // ip参数有值，填充到输入框
+                    this.ipInput.value = ipParam.trim();
+                    console.log('检测到URL参数ip:', ipParam.trim());
+                } else {
+                    // ip参数为空，保持输入框为空（将查询访问者IP）
+                    this.ipInput.value = '';
+                    console.log('检测到空的URL参数ip，将查询访问者IP');
+                }
+            }
+        } catch (error) {
+            console.warn('URL参数解析失败:', error);
+            this.urlParamQuery = false;
+        }
     }
 
     validateInput() {
